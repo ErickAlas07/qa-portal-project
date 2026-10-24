@@ -1,30 +1,28 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { ESTADOS_PRUEBA, ESTADOS_UI } from '../utils/constants';
+import { ESTADOS_PRUEBA, getEstadoUI } from '../utils/constants';
+import { apiService } from '../services/api';
 
-export default function Drawer({ isOpen, onClose, item }) {
+export default function Drawer({ isOpen, onClose, item, estadosDisponibles = [] }) {
   const [selectedStatus, setSelectedStatus] = useState(item?.estado || ESTADOS_PRUEBA.PENDIENTE);
   const [observaciones, setObservaciones] = useState(item?.observaciones || '');
+  const [isSaving, setIsSaving] = useState(false);
 
   if (!isOpen || !item) return null;
 
   return (
     <>
-      {/* Overlay oscuro para el fondo */}
       <div 
         className="fixed inset-0 bg-slate-900/40 z-40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Contenedor del Drawer deslizable */}
       <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl pb-safe dark:bg-dark-bg border-t border-slate-200 dark:border-slate-800 animate-[slide-up_0.3s_ease-out]">
         
-        {/* Manija superior */}
         <div className="w-full flex justify-center pt-3 pb-1">
           <div className="w-12 h-1.5 bg-slate-300 rounded-full dark:bg-slate-700" />
         </div>
 
-        {/* Cabecera */}
         <div className="flex justify-between items-center px-4 py-2 border-b border-slate-100 dark:border-slate-800">
           <div>
             <span className="text-xs font-mono font-bold text-slate-500">{item.id_caso}</span>
@@ -35,22 +33,20 @@ export default function Drawer({ isOpen, onClose, item }) {
           </button>
         </div>
 
-        {/* Cuerpo del formulario */}
         <div className="p-4 space-y-5 overflow-y-auto max-h-[70vh]">
           
           <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 dark:bg-slate-800/50 dark:border-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300">
             {item.descripcion}
           </div>
 
-          {/* Selector de Estados */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 dark:text-slate-400">
               Estado de la Prueba
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {[ESTADOS_PRUEBA.HECHO, ESTADOS_PRUEBA.EN_PROCESO, ESTADOS_PRUEBA.OBSERVAC, ESTADOS_PRUEBA.FALLO].map((estadoKey) => {
+              {estadosDisponibles.map((estadoKey) => {
                 const isSelected = selectedStatus === estadoKey;
-                const ui = ESTADOS_UI[estadoKey];
+                const ui = getEstadoUI(estadoKey);
                 const Icon = ui.icon;
                 
                 return (
@@ -71,7 +67,6 @@ export default function Drawer({ isOpen, onClose, item }) {
             </div>
           </div>
 
-          {/* Textarea para notas */}
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 dark:text-slate-400">
               Observaciones
@@ -85,15 +80,26 @@ export default function Drawer({ isOpen, onClose, item }) {
             />
           </div>
 
-          {/* Botón Guardar */}
           <button 
-            className="w-full bg-odoo-purple text-white font-bold py-3.5 rounded-xl shadow-md active:scale-[0.98] transition hover:bg-opacity-90 dark:bg-dark-emerald dark:text-slate-900"
-            onClick={() => {
-              console.log('Guardando...', { id: item.id_caso, estado: selectedStatus, observaciones });
-              onClose();
+            disabled={isSaving}
+            className={`w-full font-bold py-3.5 rounded-xl shadow-md transition ${
+              isSaving 
+                ? 'bg-slate-400 text-slate-200 cursor-not-allowed dark:bg-slate-700' 
+                : 'bg-odoo-purple text-white active:scale-[0.98] hover:bg-opacity-90 dark:bg-dark-emerald dark:text-slate-900'
+            }`}
+            onClick={async () => {
+              setIsSaving(true);
+              try {
+                await apiService.updateTestCase(item.id_caso, selectedStatus, observaciones);
+                onClose();
+              } catch (error) {
+                alert("Error al guardar: " + error.message);
+              } finally {
+                setIsSaving(false);
+              }
             }}
           >
-            Guardar Cambios
+            {isSaving ? 'Guardando en Sheets...' : 'Guardar Cambios'}
           </button>
         </div>
 

@@ -1,18 +1,18 @@
 import { Filter } from 'lucide-react';
-import { ESTADOS_PRUEBA, ESTADOS_UI } from '../utils/constants';
+import { getEstadoUI } from '../utils/constants';
 
 export default function FiltersBar({ 
-  modulos = ['Todos'],   
-  estados = [ESTADOS_PRUEBA.TODOS, ESTADOS_PRUEBA.HECHO, ESTADOS_PRUEBA.PENDIENTE, ESTADOS_PRUEBA.EN_PROCESO, ESTADOS_PRUEBA.OBSERVAC], 
+  modulos = ['Todos'], 
+  estados = [], 
   selectedModule = 'Todos', 
-  selectedState = ESTADOS_PRUEBA.TODOS, 
+  selectedState = 'TODOS', 
   onModuleChange, 
   onStateChange 
 }) {
   return (
     <div className="bg-white border-b border-slate-200 dark:bg-dark-bg dark:border-slate-800 sticky top-[72px] z-10">
       
-      {/* Chips de Módulos dinámicos */}
+      {/* Tabs Horizontales por Módulo */}
       <div className="flex space-x-2 overflow-x-auto px-4 pt-3 pb-2 no-scrollbar">
         {modulos.map(mod => (
           <button
@@ -33,7 +33,8 @@ export default function FiltersBar({
       <div className="flex items-center space-x-2 overflow-x-auto px-4 py-2 text-xs no-scrollbar">
         <Filter className="w-4 h-4 text-slate-400 shrink-0" />
         {estados.map(estadoKey => {
-          const label = estadoKey === ESTADOS_PRUEBA.TODOS ? 'Ver Todos' : ESTADOS_UI[estadoKey].label.toUpperCase();
+          // Extraemos la etiqueta limpia del mapeo o el comodín
+          const label = estadoKey === 'TODOS' ? 'Ver Todos' : getEstadoUI(estadoKey).label.toUpperCase();
           
           return (
             <button

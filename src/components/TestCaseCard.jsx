@@ -1,9 +1,10 @@
 import { ChevronRight, AlertCircle } from 'lucide-react';
-import { ESTADOS_UI, ESTADOS_PRUEBA } from '../utils/constants';
+import { ESTADOS_PRUEBA, getEstadoUI } from '../utils/constants';
 
 export default function TestCaseCard({ item, onClick }) {
-  const currentStatus = ESTADOS_UI[item.estado] || ESTADOS_UI[ESTADOS_PRUEBA.PENDIENTE];
+  const currentStatus = getEstadoUI(item.estado || ESTADOS_PRUEBA.PENDIENTE);
   const StatusIcon = currentStatus.icon;
+
   const leftBorderColor = currentStatus.color.split(' ')[0];
 
   return (
@@ -11,7 +12,6 @@ export default function TestCaseCard({ item, onClick }) {
       onClick={() => onClick?.(item)}
       className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm active:scale-[0.99] transition cursor-pointer dark:bg-dark-bg dark:border-slate-800 relative overflow-hidden"
     >
-      {/* Barra lateral de color según el estado */}
       <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${leftBorderColor}`} />
 
       <div className="flex justify-between items-start mb-2 pl-2">
@@ -28,7 +28,6 @@ export default function TestCaseCard({ item, onClick }) {
         {item.descripcion}
       </p>
 
-      {/* Pie de la tarjeta */}
       <div className="flex justify-between items-center text-xs text-slate-500 border-t border-slate-100 pt-3 mt-2 pl-2 dark:border-slate-800 dark:text-slate-400">
         <span className="truncate max-w-[140px] font-medium text-slate-600 dark:text-slate-400">
            {item.modulo}
@@ -40,7 +39,10 @@ export default function TestCaseCard({ item, onClick }) {
               <AlertCircle className="w-3 h-3" /> Nota
             </span>
           )}
-          <span className="font-bold text-slate-700 dark:text-slate-300">{item.porcentaje}%</span>
+          {/* MULTIPLICAMOS POR 100 PARA CORREGIR LA VISTA DE GOOGLE SHEETS */}
+          <span className="font-bold text-slate-700 dark:text-slate-300">
+            {item.porcentaje}%
+          </span>
           <ChevronRight className="w-4 h-4 text-slate-400" />
         </div>
       </div>

@@ -4,21 +4,26 @@ import Navbar from '../components/Navbar';
 import FiltersBar from '../components/FiltersBar';
 import TestCaseCard from '../components/TestCaseCard';
 import Drawer from '../components/Drawer';
+import CaseFormModal from '../components/CaseFormModal';
 import { ESTADOS_PRUEBA } from '../utils/constants';
 import { apiService } from '../services/api';
-import { ChevronLeft, ChevronRight } from 'lucide-react'; 
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 function Matrix() {
   const [activeModule, setActiveModule] = useState('Todos');
   const [activeFilter, setActiveFilter] = useState('TODOS');
   const [selectedItem, setSelectedItem] = useState(null);
 
+  // null | { mode: 'create' } | { mode: 'edit', item }
+  const [formModal, setFormModal] = useState(null);
+
   const [items, setItems] = useState([]);
   const [modulos, setModulos] = useState(['Todos']);
+  const [modulosForm, setModulosForm] = useState([]);
   const [estadosFiltro, setEstadosFiltro] = useState(['TODOS']);
   const [metrics, setMetrics] = useState({ total: 0, completed: 0, progress: 0 });
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const [tituloApp, setTituloApp] = useState('Cargando...');
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 15;
@@ -43,6 +48,11 @@ function Matrix() {
 
     const uniqueModules = ['Todos', ...new Set(correctedItems.map(item => item.modulo).filter(Boolean))];
     setModulos(uniqueModules);
+    setModulosForm(
+      data.modules && data.modules.length
+        ? data.modules
+        : uniqueModules.filter(m => m !== 'Todos')
+    );
 
     const estadosBase = [
       ESTADOS_PRUEBA.PENDIENTE,
@@ -96,29 +106,27 @@ function Matrix() {
     };
   }, [projectId, applyData]);
 
-  // 2. NUEVO: Polling (Actualización silenciosa automática)
+  // 2. Polling (actualización silenciosa automática)
   useEffect(() => {
     if (!projectId) return;
-    
+
     const intervalId = setInterval(async () => {
       try {
-        // Petición silenciosa (sin activar setIsLoading)
         const data = await apiService.getTestCases(projectId);
         if (data.status === 'success') {
-          applyData(data); // Si hay cambios, React actualizará solo lo necesario
+          applyData(data);
         }
       } catch (error) {
         console.error("Error en la actualización automática (polling)", error);
       }
-    }, 15000); // Se ejecuta cada 15 segundos
+    }, 15000);
 
-    return () => clearInterval(intervalId); // Limpieza al salir del componente
+    return () => clearInterval(intervalId);
   }, [projectId, applyData]);
 
-  // Al cambiar de filtro, regresamos a la página 1
   const handleModuleChange = (mod) => {
     setActiveModule(mod);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const handleFilterChange = (filtro) => {
@@ -134,22 +142,22 @@ function Matrix() {
 
   const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
   const currentItems = filteredItems.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE, 
+    (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans dark:bg-slate-900 pb-10">
       <div className="max-w-md mx-auto bg-slate-100 dark:bg-slate-900 min-h-screen shadow-2xl relative">
-        <Navbar 
-          title={tituloApp} 
-          progress={metrics.progress} 
-          total={metrics.total} 
-          completed={metrics.completed} 
-          onRefresh={handleRefresh} 
+        <Navbar
+          title={tituloApp}
+          progress={metrics.progress}
+          total={metrics.total}
+          completed={metrics.completed}
+          onRefresh={handleRefresh}
         />
-        
-        <FiltersBar 
+
+        <FiltersBar
           modulos={modulos}
           estados={estadosFiltro}
           selectedModule={activeModule}
@@ -157,27 +165,25 @@ function Matrix() {
           onModuleChange={handleModuleChange}
           onStateChange={handleFilterChange}
         />
-        
-        <main className="p-4 space-y-3">
+
+        <main className="p-4 pb-24 space-y-3">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center pt-20 text-odoo-purple dark:text-dark-emerald animate-pulse">
               <span className="font-bold text-sm">Cargando matriz de pruebas...</span>
             </div>
           ) : filteredItems.length > 0 ? (
             <>
-              {/* 15 registros de la página actual */}
               {currentItems.map((item) => (
-                <TestCaseCard 
-                  key={item.id_caso} 
-                  item={item} 
+                <TestCaseCard
+                  key={item.id_caso}
+                  item={item}
                   onClick={(clickedItem) => setSelectedItem(clickedItem)}
                 />
               ))}
 
-              {/* Controles de Paginación */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-6 bg-white dark:bg-slate-800 p-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-                  <button 
+                  <button
                     onClick={() => {
                       setCurrentPage(prev => Math.max(prev - 1, 1));
                       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -187,12 +193,12 @@ function Matrix() {
                   >
                     <ChevronLeft className="w-6 h-6" />
                   </button>
-                  
+
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
                     Página {currentPage} de {totalPages}
                   </span>
-                  
-                  <button 
+
+                  <button
                     onClick={() => {
                       setCurrentPage(prev => Math.min(prev + 1, totalPages));
                       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -211,17 +217,48 @@ function Matrix() {
         </main>
       </div>
 
-      <Drawer 
-        key={selectedItem ? selectedItem.id_caso : 'drawer-closed'} 
-        isOpen={selectedItem !== null} 
-        item={selectedItem} 
+      {/* Botón flotante: nuevo caso */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md px-4 flex justify-end pointer-events-none z-30">
+        <button
+          onClick={() => setFormModal({ mode: 'create' })}
+          title="Nuevo caso de prueba"
+          className="pointer-events-auto w-14 h-14 rounded-full bg-[#5c3e58] hover:bg-[#4a3247] text-white shadow-xl flex items-center justify-center transition active:scale-95"
+        >
+          <Plus className="w-7 h-7" />
+        </button>
+      </div>
+
+      <Drawer
+        key={selectedItem ? selectedItem.id_caso : 'drawer-closed'}
+        isOpen={selectedItem !== null}
+        item={selectedItem}
         projectId={projectId}
         estadosDisponibles={estadosFiltro.filter(e => e !== 'TODOS')}
+        onEdit={(it) => {
+          setSelectedItem(null);
+          setFormModal({ mode: 'edit', item: it });
+        }}
         onClose={() => {
           setSelectedItem(null);
-          handleRefresh(); 
-        }} 
+          handleRefresh();
+        }}
       />
+
+      {formModal && (
+        <CaseFormModal
+          key={formModal.item ? formModal.item.id_caso : 'create'}
+          mode={formModal.mode}
+          item={formModal.item}
+          modulos={modulosForm}
+          existingIds={items.map(i => i.id_caso)}
+          projectId={projectId}
+          onClose={() => setFormModal(null)}
+          onSaved={() => {
+            setFormModal(null);
+            handleRefresh();
+          }}
+        />
+      )}
     </div>
   );
 }

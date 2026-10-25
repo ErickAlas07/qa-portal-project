@@ -112,5 +112,68 @@ export const apiService = {
       console.error('Error updating test case:', error);
       throw error;
     }
+  },
+
+  /**
+   * NUEVO: Crea un caso de prueba en la matriz
+   */
+  async createTestCase(projectId, id_caso, modulo, descripcion) {
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'createTestCase',
+          projectId: projectId,
+          payload: { id_caso, modulo, descripcion }
+        })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating test case:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * NUEVO: Edita la información base de un caso de prueba
+   */
+  async editTestCase(projectId, id_caso_original, id_caso_nuevo, modulo, descripcion) {
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'editTestCase',
+          projectId: projectId,
+          payload: { id_caso_original, id_caso_nuevo, modulo, descripcion }
+        })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error editing test case:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * NUEVO: Elimina un caso de prueba de la matriz
+   */
+  async deleteTestCase(projectId, id_caso) {
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'deleteTestCase',
+          projectId: projectId,
+          id_caso: id_caso
+        })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error deleting test case:', error);
+      throw error;
+    }
   }
 };

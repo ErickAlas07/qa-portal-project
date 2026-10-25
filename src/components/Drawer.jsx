@@ -3,7 +3,8 @@ import { X } from 'lucide-react';
 import { ESTADOS_PRUEBA, getEstadoUI } from '../utils/constants';
 import { apiService } from '../services/api';
 
-export default function Drawer({ isOpen, onClose, item, estadosDisponibles = [] }) {
+// NUEVO: Agregamos projectId aquí
+export default function Drawer({ isOpen, onClose, item, estadosDisponibles = [], projectId }) {
   const [selectedStatus, setSelectedStatus] = useState(item?.estado || ESTADOS_PRUEBA.PENDIENTE);
   const [observaciones, setObservaciones] = useState(item?.observaciones || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -90,7 +91,8 @@ export default function Drawer({ isOpen, onClose, item, estadosDisponibles = [] 
             onClick={async () => {
               setIsSaving(true);
               try {
-                await apiService.updateTestCase(item.id_caso, selectedStatus, observaciones);
+                // NUEVO: Pasamos el projectId al servicio API
+                await apiService.updateTestCase(projectId, item.id_caso, selectedStatus, observaciones);
                 onClose();
               } catch (error) {
                 alert("Error al guardar: " + error.message);

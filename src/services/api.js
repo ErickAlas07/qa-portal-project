@@ -4,15 +4,47 @@ const SCRIPT_URL = import.meta.env.VITE_GAS_URL;
 
 export const apiService = {
   /**
-   * Obtiene la lista completa de casos de prueba desde Google Sheets
+   * Obtiene la lista de proyectos desde el "Master Hub"
    */
-  async getTestCases() {
+  async getProjects() {
     try {
-      const response = await fetch(SCRIPT_URL);
+      const response = await fetch(`${SCRIPT_URL}?action=getProjects`);
       if (!response.ok) throw new Error('Error de red al conectar con Apps Script');
       
       const data = await response.json();
-      return data; // Retornará { status, summary, items, ... }
+      return data; // Retornará { status, items }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Obtiene la lista de carpetas de Drive
+   */
+  async getFolders() {
+    try {
+      const response = await fetch(`${SCRIPT_URL}?action=getFolders`);
+      if (!response.ok) throw new Error('Error de red al conectar con Apps Script');
+      
+      const data = await response.json();
+      return data; 
+    } catch (error) {
+      console.error('Error fetching folders:', error);
+      throw error;
+    }
+  },
+
+  /**
+   *  Pide la matriz de un proyecto específico
+   */
+  async getTestCases(projectId) {
+    try {
+      const response = await fetch(`${SCRIPT_URL}?action=getMatrix&projectId=${projectId}`);
+      if (!response.ok) throw new Error('Error de red al conectar con Apps Script');
+      
+      const data = await response.json();
+      return data; 
     } catch (error) {
       console.error('Error fetching test cases:', error);
       throw error; 
@@ -20,11 +52,39 @@ export const apiService = {
   },
 
   /**
-   * Envía la actualización de un caso de prueba
+   * NUEVO: Crea un proyecto duplicando la plantilla
    */
-  async updateTestCase(id_caso, estado, observaciones) {
+  async createProject(nombre, descripcion, miembros, folderId) {
     try {
-      // Obtenemos el porcentaje automático según el estado que eligió el usuario
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify({
+          action: 'createProject',
+          payload: {
+            nombre,
+            descripcion,
+            miembros: Number(miembros) || 0,
+            folderId: folderId || null
+          }
+        })
+      });
+      const result = await response.json();
+      if (result.status === 'error') throw new Error(result.message);
+      return result;
+    } catch (error) {
+      console.error('Error creating project:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Envía el ID del proyecto junto con los datos a actualizar
+   */
+  async updateTestCase(projectId, id_caso, estado, observaciones) {
+    try {
       const porcentajeAutomatico = ESTADOS_UI[estado]?.porcentaje || 0;
 
       const response = await fetch(SCRIPT_URL, {
@@ -32,9 +92,9 @@ export const apiService = {
         headers: {
           'Content-Type': 'text/plain;charset=utf-8', 
         },
-        // Estructura exacta que espera tu doPost (action: "updateItem" + payload)
         body: JSON.stringify({
           action: 'updateItem',
+          projectId: projectId, 
           payload: {
             id_caso,
             estado,

@@ -18,7 +18,7 @@ export const ESTADOS_UI = {
   [ESTADOS_PRUEBA.OBSERVACIONES]: { label: 'Observaciones', porcentaje: 90,  color: 'bg-amber-500 text-white',   border: 'border-amber-500',   icon: AlertCircle },
   [ESTADOS_PRUEBA.FALLIDO]:       { label: 'Fallido',       porcentaje: 0,   color: 'bg-rose-500 text-white',    border: 'border-rose-500',    icon: XCircle },
   [ESTADOS_PRUEBA.PENDIENTE]:     { label: 'Pendiente',     porcentaje: 0,   color: 'bg-slate-200 text-slate-700',border: 'border-slate-300',  icon: HelpCircle },
-  [ESTADOS_PRUEBA.NO_APLICA]:     { label: 'N/A',           porcentaje: 0,   color: 'bg-gray-300 text-gray-700', border: 'border-gray-400',    icon: XCircle }
+  [ESTADOS_PRUEBA.NO_APLICA]:     { label: 'N/A',           porcentaje: 0,   color: 'bg-purple-300 text-gray-700', border: 'border-gray-400',    icon: XCircle }
 };
 
 export const getEstadoUI = (estado) => {
